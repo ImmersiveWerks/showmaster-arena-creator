@@ -1,0 +1,398 @@
+-- Mod_TribuneBuilder: tribunes made with the Blender add-on "PC2 Tribune Builder".
+-- Technique: clone the database rows and the prefab of the cinema (FR_Cinema, Silver Screen DLC), then replace
+-- the building, footprint, navmesh, entrance lines and seats with the tribune's own data.
+-- Generated file - every build of the add-on overwrites it.
+local global = _G
+local api = global.api
+local pairs, ipairs, type, tostring, pcall = global.pairs, global.ipairs, global.type, global.tostring, global.pcall
+local string, table, require = global.string, global.table, global.require
+local getmetatable, setmetatable = global.getmetatable, global.setmetatable
+
+local M = module(...)
+
+local BASE = "FR_Cinema"
+local VARIANTS = {
+--@@VARIANTS@@
+}
+local SEAT_YAW_SIGN = --@@YAWSIGN@@
+local SEAT_DEPTH = -6.0      -- fallback: seats under the ground
+local GRID_COLS = 7
+local GRID_STEP = 0.4
+local EMPTY_MODEL = "FR_Cinema_Cabin"      -- exists in the cinema package and has no geometry
+local BASE_PLATFORM = "FR_Cinema_Platform_Art"
+
+M.trace = function(s) pcall(api.debug.Trace, "[tribunebuilder] " .. tostring(s)) end
+
+function M.AddContentToCall(_tContentToCall)
+    table.insert(_tContentToCall, require("Database.Mod_TribuneBuilderLuaDatabase"))
+end
+
+-- ------------------------------------------------------------------ database
+
+local function run(db, dbName, stmt, args)
+    local ok, res = pcall(function()
+        local ps = db.GetPreparedStatementInstance(dbName, stmt)
+        if ps == nil then error("no prepared statement " .. stmt, 0) end
+        for i, v in ipairs(args) do db.BindParameter(ps, i, v) end
+        db.BindComplete(ps)
+        db.Step(ps)
+        return ps
+    end)
+    if not ok then return false, tostring(res) end
+    return true, res
+end
+
+local function find_db(named, want)
+    if type(named) ~= "table" then return nil end
+    for k, v in pairs(named) do
+        for _, cand in ipairs({ k, v }) do
+            if type(cand) == "string" and string.gsub(string.lower(cand), "_", "") == want then return cand end
+        end
+    end
+    return nil
+end
+
+local function bind(db, listed, fallbacks, coll)
+    local names = {}
+    if listed then names[#names + 1] = listed end
+    for _, n in ipairs(fallbacks) do names[#names + 1] = n end
+    for _, name in ipairs(names) do
+        local okRo = pcall(db.SetReadOnly, name, false)
+        local okB, bound = pcall(db.BindPreparedStatementCollection, name, coll)
+        if okRo then pcall(db.SetReadOnly, name, true) end
+        if okB and bound then return name end
+    end
+    return nil
+end
+
+local function base_rows(db, rides)
+    local ok, ps = run(db, rides, "TB_Simulation__Count", { BASE })
+    if not ok then return nil end
+    local okR, rows = pcall(db.GetAllResults, ps, false)
+    if db.Reset ~= nil then pcall(db.Reset, ps) end
+    local n = okR and type(rows) == "table" and type(rows[1]) == "table" and rows[1][1] or nil
+    return type(n) == "number" and n or nil
+end
+
+local CALLS = {
+    { "TB_Simulation__Clone", "kb" },
+    { "TB_Simulation__Cheap", "k" },
+    { "TB_SequenceData__Delete", "k" },
+    { "TB_SequenceData__Clone", "kb" },
+    { "TB_SequenceData__Relabel", "k" },
+    { "TB_BrowserEntries__Clone", "kbld" },
+    { "TB_PrefabDefaults__Clone", "kb" },
+    { "TB_BlueprintTags__Clone", "kb" },
+    { "TB_RideMetadataTags__Clone", "kb" },
+    { "TB_UtilityConsumer__Clone", "kb" },
+}
+
+-- tribunes: show values and time steps (30 s to 15 min)
+local SHOW_CALLS = {
+    TB_Simulation__Cheap = "TB_Simulation__Show",
+    TB_SequenceData__Relabel = "TB_SequenceData__RelabelShow",
+}
+local function args_for(spec, key)
+    local out = {}
+    for i = 1, #spec do
+        local c = string.sub(spec, i, i)
+        out[i] = (c == "k" and key) or (c == "b" and BASE) or (c == "l" and key) or (key .. "_Desc")
+    end
+    return out
+end
+
+function M.InsertToDBs()
+    local db = api.database
+    local okN, named = pcall(db.GetNamedDatabases)
+    if not okN then named = {} end
+    local rides = bind(db, find_db(named, "rides"), { "Rides" }, "TribuneBuilder_Rides")
+    if not rides then M.trace("rides database not found") return end
+    local own = bind(db, find_db(named, "ridesownership"), { "Rides_Ownership", "RidesOwnership" }, "TribuneBuilder_RidesOwnership")
+    M.bound = { { rides, "TribuneBuilder_Rides" } }
+    if own then M.bound[#M.bound + 1] = { own, "TribuneBuilder_RidesOwnership" } end
+    if base_rows(db, rides) == 0 then
+        M.trace(BASE .. " missing (Silver Screen DLC?); tribunes skipped")
+        return
+    end
+    for _, v in ipairs(VARIANTS) do
+        db.SetReadOnly(rides, false)
+        local ok, err = true, nil
+        for _, call in ipairs(CALLS) do
+            local name = call[1]
+            if v.show and SHOW_CALLS[name] then name = SHOW_CALLS[name] end
+            ok, err = run(db, rides, name, args_for(call[2], v.key))
+            if not ok then break end
+        end
+        if ok and v.show then ok, err = run(db, rides, "TB_SequenceData__BoostShow", { v.key }) end
+        -- own icon in the build menu (picture made by the add-on)
+        if ok and v.icon then run(db, rides, "TB_BrowserEntries__Icon", { v.key, v.icon }) end
+        db.SetReadOnly(rides, true)
+        if ok and own then
+            db.SetReadOnly(own, false)
+            ok, err = run(db, own, "TB_SecurityOwnership__Clone", { v.key, BASE })
+            db.SetReadOnly(own, true)
+        end
+        M.trace(v.key .. (ok and " rows cloned" or (" clone failed: " .. tostring(err))))
+    end
+end
+
+-- the UI package with the icon pictures
+local UIPKG = --@@UIPKG@@
+
+function M.Init()
+    if UIPKG then pcall(api.ui2.MapResources, UIPKG) end
+end
+
+function M.Shutdown()
+    if UIPKG then pcall(api.ui2.UnmapResources, UIPKG) end
+    local db = api.database
+    if type(db) ~= "table" or db.UnbindPreparedStatementCollection == nil then return end
+    for _, b in ipairs(M.bound or {}) do
+        pcall(db.SetReadOnly, b[1], false)
+        pcall(db.UnbindPreparedStatementCollection, b[1], b[2])
+        pcall(db.SetReadOnly, b[1], true)
+    end
+end
+
+-- ------------------------------------------------------------------ prefab
+
+local function deepcopy(t, seen)
+    if type(t) ~= "table" then return t end
+    seen = seen or {}
+    if seen[t] then return seen[t] end
+    local out = {}
+    seen[t] = out
+    for k, v in pairs(t) do out[deepcopy(k, seen)] = deepcopy(v, seen) end
+    local mt = getmetatable(t)
+    if mt ~= nil then setmetatable(out, mt) end
+    return out
+end
+
+local function V3(x, y, z) return require("Vector3"):new(x, y, z) end
+
+local function grid(i)  -- fallback position i = 1..n on a small grid
+    local c = (i - 1) % GRID_COLS
+    local r = (i - 1 - c) / GRID_COLS
+    return -1.2 + c * GRID_STEP, -1.2 + r * GRID_STEP
+end
+
+local function tgrid(i, v)  -- fallback walk target
+    local k = (i - 1) % 10
+    local r = ((i - 1 - k) / 10) % 5
+    local half = v.w / 2 - 0.5
+    local hx = v.d / 2 - 0.5
+    local x = 0.0
+    if hx > 0 then x = -hx + r * (2 * hx / 4) end
+    return x, -half + k * (2 * half / 9)
+end
+
+local function child(node, ...)
+    for _, name in ipairs({ ... }) do
+        if type(node) ~= "table" or type(node.Children) ~= "table" then return nil end
+        node = node.Children[name]
+    end
+    return node
+end
+
+local function set_prop(node, prop, value)
+    if type(node) == "table" and type(node.Properties) == "table" and type(node.Properties[prop]) == "table" then
+        node.Properties[prop].Default = value
+        return true
+    end
+    return false
+end
+
+local function build(flat, v)
+    local p = deepcopy(flat)
+    local comps = p.Components or {}
+    local props = p.Properties or {}
+    local notes = {}
+    if type(props.PrefabName) == "table" then props.PrefabName.Default = v.key end
+    for _, sim in ipairs({ "RideSimulation", "StationSimulation" }) do
+        if type(comps[sim]) == "table" then comps[sim].RideName = v.key end
+    end
+    comps.PlacementSound = nil
+    -- no cinema building
+    if v.hide then
+        -- keep the model component (placing needs it) but point it to an empty model
+        if type(comps.Model) == "table" then comps.Model.ModelName = EMPTY_MODEL end
+    end
+    -- flexicolour: default ride colours from Blender, plain colours (the cinema has patterns on some slots)
+    if type(p.ComponentSources) == "table" then p.ComponentSources.MaterialCustomisationProvider = nil end
+    local mcp = comps.MaterialCustomisationProvider
+    for _, c in ipairs(v.colours or {}) do
+        local slot = "Slot" .. c[1]
+        set_prop(p, slot .. "_Colour", V3(c[2], c[3], c[4]))
+        if type(mcp) == "table" and type(mcp[slot]) == "table" then
+            mcp[slot].PatternTexture = nil
+            mcp[slot].PatternTileOffsets = nil
+            mcp[slot].RoughnessAdjust = nil
+        end
+    end
+    local root_joint = child(p, "def_c_root_joint")
+    if root_joint and root_joint.Children then
+        root_joint.Children.Screen = nil
+        -- the tribune model as a child of the root joint (where the screen was)
+        if v.model then
+            root_joint.Children.Tribune = {
+                Components = {
+                    AssetPackageProvider = { LoaderPath = "../.." },
+                    Model = { ModelName = v.model },
+                    RenderMaterialEffects = { InstanceData = { MaterialCustomisationProviderEntity = "../.." } },
+                    Transform = {},
+                },
+                IncompleteComponents = {},
+            }
+        end
+    end
+    if not v.small then return p, 0, notes end
+    local pre = v.pre
+    -- own motion graph: the cinema clips, slowed down to show lengths of 30 s to 15 min
+    if type(props.MotionGraphName) == "table" then props.MotionGraphName.Default = "TB_Show" end
+    -- load the package with the motion graph (TBShow.ovl) and the model
+    if type(props.AssetPackages) == "table" and type(props.AssetPackages.Default) == "table" then
+        local list = props.AssetPackages.Default
+        list[#list + 1] = "TB_Show"
+        if v.model then list[#list + 1] = v.pkg end
+    end
+    -- components listed in "ComponentSources" are taken from the original prefab when it is compiled;
+    -- remove the source for everything changed here so our data is used
+    if type(p.ComponentSources) == "table" then
+        for _, c in ipairs({ "PathJoinPart", "RideNavigation", "RenderBoundingVolume" }) do p.ComponentSources[c] = nil end
+    end
+    if type(comps.RenderBoundingVolume) == "table" then comps.RenderBoundingVolume.Radius = v.radius or 4.0 end
+    -- footprint, navmesh, platform
+    local plat = child(p, "def_c_root_joint", "SceneryPlatform_Frame")
+    if plat and plat.Components and plat.Components.SceneryPlatformFinder then
+        plat.Components.SceneryPlatformFinder.ModelName = pre .. "_SceneryPlatform_Frame"
+    else notes[#notes + 1] = "no SceneryPlatform_Frame" end
+    if not set_prop(child(p, "NavMesh"), "TriMesh", pre .. "_Nav") then notes[#notes + 1] = "no NavMesh" end
+    if not set_prop(child(p, "SpatialDatabase"), "SpatialVolume", pre .. "_RideSpatial") then notes[#notes + 1] = "no SpatialDatabase" end
+    if not set_prop(child(p, "SelectableVolume"), "SelectableVolume", pre .. "_RideSpatial") then notes[#notes + 1] = "no SelectableVolume" end
+    -- outline with entrance/exit lines
+    local pj = comps.PathJoinPart
+    if type(pj) == "table" and type(pj.PathJoinParts) == "table" and type(pj.PathJoinParts[1]) == "table" then
+        local spl = { __inheritance = "Overwrite" }
+        for i, s in ipairs(v.spl or { "EXF_001", "FON_002", "EXF_003", "FON_004" }) do spl[i] = pre .. "_Platform_SPL_" .. s end
+        pj.PathJoinParts[1].Splines = spl
+    else notes[#notes + 1] = "no PathJoinPart" end
+    -- ride booth
+    local booth = child(p, "Booth")
+    local rb = booth and booth.Components and booth.Components.RideBooth
+    if rb and type(rb.PlacePoints) == "table" and type(rb.PlacePoints[1]) == "table" then
+        if v.booth then
+            -- position chosen in Blender
+            rb.PlacePoints[1].Position = V3(v.booth[1], 0.0, v.booth[2])
+        else
+            rb.PlacePoints[1].Position = V3(0.0, 0.0, -(v.w / 2 + 0.8))
+        end
+    else notes[#notes + 1] = "no Booth" end
+    -- seats: keep v.seats seats, place them, set row/number/rotation
+    local cabin = child(p, "Cabin_Attach1", "Cabin")
+    local kept = 0
+    -- more seats than the cinema has: copy seat 1
+    if cabin and type(cabin.Children) == "table" and cabin.Children.Seat_Attach1 then
+        for n = 1, v.seats do
+            if cabin.Children["Seat_Attach" .. n] == nil then
+                cabin.Children["Seat_Attach" .. n] = deepcopy(cabin.Children.Seat_Attach1)
+            end
+        end
+    end
+    if cabin and type(cabin.Children) == "table" then
+        for name, node in pairs(cabin.Children) do
+            local n = global.tonumber(string.match(name, "^Seat_Attach(%d+)$"))
+            if n then
+                if n > v.seats then
+                    cabin.Children[name] = nil
+                else
+                    local sp = v.seatpos and v.seatpos[n]
+                    if sp then
+                        set_prop(node, "Position", V3(sp[1], sp[2], sp[3]))
+                        set_prop(node, "RowNumber", sp[4])
+                        set_prop(node, "SeatNumber", sp[5])
+                        -- Rotation is (heading, pitch, roll); heading 0 looks along +Z, like the cinema seats
+                        if sp[9] then set_prop(node, "Rotation", V3(SEAT_YAW_SIGN * sp[9], 0.0, 0.0)) end
+                    else
+                        local x, z = grid(n)
+                        set_prop(node, "Position", V3(x, SEAT_DEPTH, z))
+                    end
+                    kept = kept + 1
+                end
+            end
+        end
+    else notes[#notes + 1] = "no Cabin" end
+    -- walk targets: one point per seat
+    local nav = comps.RideNavigation
+    if type(nav) == "table" and type(nav.Targets) == "table" then
+        local by_seat = {}
+        for _, t in pairs(nav.Targets) do
+            if type(t) == "table" and type(t.Target) == "string" then
+                local n = global.tonumber(string.match(t.Target, "Seat_Attach(%d+)$"))
+                if n then by_seat[n] = t end
+            end
+        end
+        local targets = {}
+        for n = 1, v.seats do
+            if by_seat[n] == nil and by_seat[1] ~= nil then
+                by_seat[n] = deepcopy(by_seat[1])
+                by_seat[n].Target = string.gsub(by_seat[1].Target, "Seat_Attach1$", "Seat_Attach" .. n)
+            end
+            local t = by_seat[n]
+            if t then
+                local sp = v.seatpos and v.seatpos[n]
+                if sp then
+                    -- walk target in front of the seat
+                    if sp[6] then
+                        t.Positions = { { Position = V3(sp[6], sp[7], sp[8]) } }
+                    else
+                        t.Positions = { { Position = V3(sp[1], sp[2], sp[3]) } }
+                    end
+                else
+                    local x, z = tgrid(n, v)
+                    t.Positions = { { Position = V3(x, 0.0, z) } }
+                end
+                targets[#targets + 1] = t
+            end
+        end
+        nav.Targets = targets
+    else notes[#notes + 1] = "no RideNavigation" end
+    return p, kept, notes
+end
+
+local function load_flat()
+    local ok, r = pcall(function() return api.entity.FindPrefab(BASE) end)
+    if ok and type(r) == "table" then return r end
+    local okM, mod = pcall(require, string.lower(BASE))
+    if okM and type(mod) == "table" and type(mod.GetFlattenedRoot) == "function" then
+        local okF, f = pcall(mod.GetFlattenedRoot)
+        if okF and type(f) == "table" then return f end
+    end
+    return nil
+end
+
+local function build_platform(v, fnAdd)
+    local ok, pf = pcall(function() return api.entity.FindPrefab(BASE_PLATFORM) end)
+    if not ok or type(pf) ~= "table" then M.trace("no " .. BASE_PLATFORM) return end
+    local p = deepcopy(pf)
+    local pre = v.pre
+    set_prop(p, "ModelName", EMPTY_MODEL)
+    set_prop(child(p, "SpatialDatabase"), "SpatialVolume", pre .. "_RideSpatial")
+    fnAdd(v.key .. "_Platform_Art", p)
+    M.trace(v.key .. "_Platform_Art registered")
+end
+
+function M.PreBuildPrefabs(_fnAdd)
+    local flat = load_flat()
+    if type(flat) ~= "table" then M.trace("no flattened " .. BASE) return end
+    for _, v in ipairs(VARIANTS) do
+        local ok, err = pcall(function()
+            local prefab, seats, notes = build(flat, v)
+            _fnAdd(v.key, prefab)
+            if v.platform then build_platform(v, _fnAdd) end
+            M.trace(v.key .. ": " .. seats .. " seats " .. global.table.concat(notes, ", "))
+        end)
+        if not ok then M.trace(v.key .. " failed: " .. tostring(err)) end
+    end
+end
+
+return M

@@ -1,0 +1,210 @@
+<FgmHeader shader_name="Master_MetallicRoughness_Standard_Opaque" game="Planet Coaster 2">
+	<textures>
+		<textureinfo name="pBaseColourTexture" dtype="FgmDtype.TEXTURE">
+			<value>
+				<texindex array_index="0" />
+			</value>
+			<dependency_name>template.pbasecolourtexture.tex</dependency_name>
+		</textureinfo>
+		<textureinfo name="pCustomisation_ChannelMasksTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="0" g="0" b="0" a="255" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+		<textureinfo name="pCustomisation_HSVOffsetTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="127" g="127" b="127" a="127" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+		<textureinfo name="pCustomisation_MasterMaskTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="255" g="255" b="127" a="127" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+		<textureinfo name="pCustomisation_ValueTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="0" g="0" b="0" a="255" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+		<textureinfo name="pEmissiveTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="0" g="0" b="0" a="255" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+		<textureinfo name="pNormalTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="127" g="127" b="255" a="255" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+		<textureinfo name="pRoughnessPackedTexture" dtype="FgmDtype.RGBA">
+			<value>
+				<bytecolor r="0" g="170" b="127" a="255" />
+				<bytecolor r="255" g="255" b="255" a="255" />
+			</value>
+		</textureinfo>
+	</textures>
+	<attributes>
+		<attribinfo name="pCustomisation_Channel1AllowInstanceColour" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1AllowInstanceRoughness" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1Colour" dtype="FgmDtype.FLOAT_3">
+			<value>1.0 1.0 1.0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1EnableColour" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1EnableEmissive" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1EnableRoughness" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1RoughnessAdjust" dtype="FgmDtype.FLOAT">
+			<value>0.5</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel1SlotIndex" dtype="FgmDtype.INT">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2AllowInstanceColour" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2AllowInstanceRoughness" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2Colour" dtype="FgmDtype.FLOAT_3">
+			<value>1.0 1.0 1.0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2EnableColour" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2EnableEmissive" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2EnableRoughness" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2RoughnessAdjust" dtype="FgmDtype.FLOAT">
+			<value>0.5</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel2SlotIndex" dtype="FgmDtype.INT">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3AllowInstanceColour" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3AllowInstanceRoughness" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3Colour" dtype="FgmDtype.FLOAT_3">
+			<value>1.0 1.0 1.0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3EnableColour" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3EnableEmissive" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3EnableRoughness" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3RoughnessAdjust" dtype="FgmDtype.FLOAT">
+			<value>0.5</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel3SlotIndex" dtype="FgmDtype.INT">
+			<value>-1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4AllowInstanceColour" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4AllowInstanceRoughness" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4Colour" dtype="FgmDtype.FLOAT_3">
+			<value>1.0 1.0 1.0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4EnableColour" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4EnableEmissive" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4EnableRoughness" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4RoughnessAdjust" dtype="FgmDtype.FLOAT">
+			<value>0.5</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_Channel4SlotIndex" dtype="FgmDtype.INT">
+			<value>-1</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_EmissiveFallbackIntensity" dtype="FgmDtype.FLOAT">
+			<value>1.0</value>
+		</attribinfo>
+		<attribinfo name="pCustomisation_LUTValuesReferencePoint" dtype="FgmDtype.FLOAT">
+			<value>0.5</value>
+		</attribinfo>
+		<attribinfo name="pDecals_IsEnabled" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pDielectricSpecularLevelEnum" dtype="FgmDtype.INT">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pEmissiveLightPower" dtype="FgmDtype.FLOAT">
+			<value>1.0</value>
+		</attribinfo>
+		<attribinfo name="pEmissiveLightType" dtype="FgmDtype.INT">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pEmissiveScrollData" dtype="FgmDtype.FLOAT_3">
+			<value>0.0 0.0 0.0</value>
+		</attribinfo>
+		<attribinfo name="pEmissiveTint" dtype="FgmDtype.FLOAT_3">
+			<value>1.0 1.0 1.0</value>
+		</attribinfo>
+		<attribinfo name="pEnablePoweredEmissive" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pEnablePulsingEmissive" dtype="FgmDtype.BOOL">
+			<value>0</value>
+		</attribinfo>
+		<attribinfo name="pEnableWeatherPooling" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+		<attribinfo name="pMaximumPorosity" dtype="FgmDtype.FLOAT">
+			<value>0.5</value>
+		</attribinfo>
+		<attribinfo name="pMaximumSnowAmount" dtype="FgmDtype.FLOAT">
+			<value>1.0</value>
+		</attribinfo>
+		<attribinfo name="pMaximumWaterSaturation" dtype="FgmDtype.FLOAT">
+			<value>2.0</value>
+		</attribinfo>
+		<attribinfo name="pPulsingEmitDarkenScale" dtype="FgmDtype.FLOAT">
+			<value>0.8</value>
+		</attribinfo>
+		<attribinfo name="pPulsingEmitFrequency" dtype="FgmDtype.FLOAT">
+			<value>1.0</value>
+		</attribinfo>
+		<attribinfo name="pSnowOnSlopesOffset" dtype="FgmDtype.FLOAT">
+			<value>0.0</value>
+		</attribinfo>
+		<attribinfo name="pSnowOpacity" dtype="FgmDtype.FLOAT">
+			<value>1.0</value>
+		</attribinfo>
+		<attribinfo name="pWeather_DiffuseNormalThreshold" dtype="FgmDtype.FLOAT">
+			<value>0.85</value>
+		</attribinfo>
+		<attribinfo name="pWeather_Enable" dtype="FgmDtype.BOOL">
+			<value>1</value>
+		</attribinfo>
+	</attributes>
+</FgmHeader>

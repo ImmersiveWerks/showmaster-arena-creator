@@ -1,0 +1,16 @@
+﻿ShowMaster Arena Creator (Version 0.26.1)
+=========================================
+
+Tribünen für Planet Coaster 2 bauen, ohne Blender.
+Sprachen: Deutsch, English, Français, Español, 中文, 日本語 (oben rechts).
+
+Voraussetzungen: Windows 10/11 und Planet Coaster 2 mit dem Silver-Screen-DLC.
+
+- Starten: Startmenü oder Desktop-Symbol "ShowMaster Arena Creator".
+- Links die sechs Schritte, rechts die 3D-Ansicht. Im letzten Schritt
+  "Speichern und ins Spiel installieren" (Spiel vorher schließen).
+- cobra-tools ist dabei. Das Programm braucht keine Internetverbindung.
+- Extras: Guest Spawner ("+500 Gäste" im Spiel, braucht ForgeUtils).
+- Wird das Spiel nicht gefunden: Einstellungen > ovldata-Ordner wählen
+  (...\steamapps\common\Planet Coaster 2\Win64\ovldata).
+- Deinstallieren: Windows-Einstellungen > Apps. Deine gespeicherten Tribünen bleiben erhalten.

@@ -1,0 +1,7 @@
+# exact versions, so every build uses the same packages
+pyinstaller==6.10.0
+pywebview==5.1
+numpy==1.26.4
+pillow==10.4.0
+imageio==2.34.2
+bitarray==2.9.2

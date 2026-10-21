@@ -1,0 +1,67 @@
+name: Release
+
+# Every download on the Releases page is built here, from the tagged source, on a fresh GitHub machine.
+# Nothing is uploaded by hand. The build log of each run is public.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write       # create the release
+  id-token: write       # sign the build provenance
+  attestations: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build program, installer and portable zip
+        run: python packaging/build_exe.py
+
+      - name: Blender add-on zip
+        shell: python
+        run: |
+          import shutil, re
+          v = re.search(r'VERSION = "([^"]+)"', open("app/server.py", encoding="utf-8").read()).group(1)
+          shutil.make_archive("packaging/output/pc2_tribune_builder_blender_addon_" + v, "zip", "blender_addon", "pc2_tribune_builder")
+
+      - name: Checksums
+        shell: python
+        run: |
+          import hashlib, os
+          out = "packaging/output"
+          files = sorted(f for f in os.listdir(out) if f.endswith((".exe", ".zip")))
+          with open(os.path.join(out, "SHA256SUMS.txt"), "w") as fh:
+              for f in files:
+                  fh.write(hashlib.sha256(open(os.path.join(out, f), "rb").read()).hexdigest() + "  " + f + "\n")
+          print(open(os.path.join(out, "SHA256SUMS.txt")).read())
+
+      - name: Signed build provenance (verify with "gh attestation verify")
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            packaging/output/*.exe
+            packaging/output/*.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: packaging/output/*
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packaging/output/*
+          generate_release_notes: true

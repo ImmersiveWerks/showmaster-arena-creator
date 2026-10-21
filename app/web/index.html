@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShowMaster Arena Creator</title>
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 27h26v-3H3zM6 23h20v-3H6zM9 19h14v-3H9zM12 15h8v-3h-8z"/></svg>
+    <span>ShowMaster Arena Creator</span>
+  </div>
+  <div class="tribune-name" id="titleName"></div>
+  <nav class="top-actions">
+    <button class="ghost" id="undoBtn" title="Rückgängig (Strg+Z)" aria-label="Rückgängig" data-i18n-title="Rückgängig (Strg+Z)" data-i18n-aria="Rückgängig"><svg viewBox="0 0 24 24"><path d="M9 7H4V2M4.5 7.5A8 8 0 1 1 4 13"/></svg></button>
+    <button class="ghost" id="redoBtn" title="Wiederholen (Strg+Y)" aria-label="Wiederholen" data-i18n-title="Wiederholen (Strg+Y)" data-i18n-aria="Wiederholen"><svg viewBox="0 0 24 24"><path d="M15 7h5V2M19.5 7.5A8 8 0 1 0 20 13"/></svg></button>
+    <span class="sep"></span>
+    <button class="ghost" id="newBtn" data-i18n="Neu">Neu</button>
+    <button class="ghost" id="libBtn" data-i18n="Meine Tribünen">Meine Tribünen</button>
+    <button class="ghost" id="extBtn" data-i18n="Extras">Extras</button>
+    <button class="ghost" id="setBtn"><span data-i18n="Einstellungen">Einstellungen</span> <i class="dot" id="setDot"></i></button>
+    <label class="lang"><span class="sr" data-i18n="Sprache">Sprache</span><select id="langSel"></select></label>
+    <button class="ghost" id="quitBtn" title="App beenden" data-i18n-title="App beenden" data-i18n="Beenden">Beenden</button>
+  </nav>
+</header>
+
+<main class="layout">
+  <ol class="steps" id="steps" aria-label="Schritte" data-i18n-aria="Schritte"></ol>
+  <section class="panel" id="panel" aria-live="polite"></section>
+  <section class="stage">
+    <canvas id="view" aria-label="3D-Ansicht der Tribüne" data-i18n-aria="3D-Ansicht der Tribüne"></canvas>
+    <div class="view-tools">
+      <button data-view="fit" title="Ganze Tribüne zeigen" data-i18n-title="Ganze Tribüne zeigen" data-i18n="Zentrieren">Zentrieren</button>
+      <button data-view="front" data-i18n="Vorne">Vorne</button>
+      <button data-view="top" data-i18n="Oben">Oben</button>
+      <button data-view="side" data-i18n="Seite">Seite</button>
+      <span class="sep"></span>
+      <label class="chip"><input type="checkbox" id="showOutline" checked> <span data-i18n="Umriss &amp; Eingänge">Umriss &amp; Eingänge</span></label>
+      <label class="chip"><input type="checkbox" id="showNav"> <span data-i18n="Laufwege">Laufwege</span></label>
+      <label class="chip"><input type="checkbox" id="showFree"> <span data-i18n="Freie Plätze">Freie Plätze</span></label>
+    </div>
+    <div class="hint" id="viewHint"><span data-i18n="Linke Maustaste: drehen">Linke Maustaste: drehen</span><span data-i18n="Rechte: verschieben">Rechte: verschieben</span><span data-i18n="Rad: zoomen">Rad: zoomen</span></div>
+    <div class="status" id="status"></div>
+    <div class="gen-error" id="genError" hidden></div>
+  </section>
+</main>
+
+<aside class="drawer" id="libDrawer" hidden>
+  <div class="drawer-head"><h2 data-i18n="Meine Tribünen">Meine Tribünen</h2><button class="ghost close" data-close data-i18n="Schließen">Schließen</button></div>
+  <p class="muted" id="libPath"></p>
+  <div id="libList" class="lib-list"></div>
+</aside>
+
+<aside class="drawer" id="extDrawer" hidden>
+  <div class="drawer-head"><h2 data-i18n="Extras">Extras</h2><button class="ghost close" data-close data-i18n="Schließen">Schließen</button></div>
+  <div id="extBody"></div>
+</aside>
+
+<aside class="drawer" id="setDrawer" hidden>
+  <div class="drawer-head"><h2 data-i18n="Einstellungen">Einstellungen</h2><button class="ghost close" data-close data-i18n="Schließen">Schließen</button></div>
+  <div id="setBody"></div>
+</aside>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
